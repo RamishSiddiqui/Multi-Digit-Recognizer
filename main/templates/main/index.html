@@ -1,0 +1,236 @@
+<html>
+<script type="text/javascript">
+    var canvas, context = false;
+
+    function init() {
+        canvas = document.getElementById('can');
+        canvas.width = 400;
+        canvas.height = 400;
+        context = canvas.getContext("2d");
+        var canvastop = canvas.offsetTop
+        var lastx;
+        var lasty;
+        context.strokeStyle = "#000000";
+        context.lineCap = 'round';
+        context.lineJoin = 'round';
+        context.lineWidth = 5;
+
+        function dot(x, y) {
+            context.beginPath();
+            context.fillStyle = "#000000";
+            context.arc(x, y, 1, 0, Math.PI * 2, true);
+            context.fill();
+            context.stroke();
+            context.closePath();
+        }
+
+        function line(fromx, fromy, tox, toy) {
+            context.beginPath();
+            context.moveTo(fromx, fromy);
+            context.lineTo(tox, toy);
+            context.stroke();
+            context.closePath();
+        }
+        canvas.ontouchstart = function(event) {
+            event.preventDefault();
+            lastx = event.touches[0].clientX;
+            lasty = event.touches[0].clientY - canvastop;
+            dot(lastx, lasty);
+        }
+        canvas.ontouchmove = function(event) {
+            event.preventDefault();
+            var newx = event.touches[0].clientX;
+            var newy = event.touches[0].clientY - canvastop;
+            line(lastx, lasty, newx, newy);
+            lastx = newx;
+            lasty = newy;
+        }
+        var Mouse = {
+            x: 0,
+            y: 0
+        };
+        var lastMouse = {
+            x: 0,
+            y: 0
+        };
+        context.fillStyle = "white";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.color = "black";
+        context.lineWidth = 10;
+        context.lineJoin = context.lineCap = 'round';
+
+        canvas.addEventListener("mousemove", function(e) {
+            lastMouse.x = Mouse.x;
+            lastMouse.y = Mouse.y;
+            Mouse.x = e.pageX - this.offsetLeft;
+            Mouse.y = e.pageY - this.offsetTop;
+        }, false);
+        canvas.addEventListener("mousedown", function(e) {
+            canvas.addEventListener("mousemove", onPaint, false);
+        }, false);
+        canvas.addEventListener("mouseup", function() {
+            canvas.removeEventListener("mousemove", onPaint, false);
+        }, false);
+        var onPaint = function() {
+            context.lineWidth = context.lineWidth;
+            context.lineJoin = "round";
+            context.lineCap = "round";
+            context.strokeStyle = context.color;
+            context.beginPath();
+            context.moveTo(lastMouse.x, lastMouse.y);
+            context.lineTo(Mouse.x, Mouse.y);
+            context.closePath();
+            context.stroke();
+        };
+    };
+
+    function erase() {
+        var m = confirm("Want to clear");
+        if (m) {
+            context.clearRect(0, 0, 400, 400);
+            document.getElementById("canvasimg").style.display = "none";
+            document.getElementById("result").innerHTML = ""
+            document.getElementById("fig").style.display = "none"
+            $("#table_body tr").remove()
+        }
+    }
+
+    function predict() {
+        var $SCRIPT_ROOT = "/main/views/";
+        var canvasObj = document.getElementById('can');
+        var context = canvas.getContext("2d");
+        var img = canvasObj.toDataURL("image/png");
+        $.ajax({
+            type: "POST",
+            url: $SCRIPT_ROOT,
+            data: {
+                img: img
+            },
+            dataType: "json",
+            success: function(data) {
+                var preds = JSON.parse(data.prediction);
+                document.getElementById("result").innerHTML = data.output;
+                var file_name = "/static/resources/".concat(data.fig_name).concat(".jpg");
+                document.getElementById("fig").src = file_name;
+                document.getElementById("fig").style.display = "block";
+
+                $("#table_body tr").remove()
+
+                var t_body = document.getElementById("table_body");
+                for (var n = 0; n < preds.length; n++) {
+                    var row = t_body.insertRow();
+                    var conf = preds[n];
+                    var pred_name = row.insertCell();
+                    pred_name.innerHTML = data.output[n];
+                    var maxindex = preds[n].indexOf(Math.max(...preds[n]))
+                    for (var m = 0; m < conf.length; m++) {
+                        var cell = row.insertCell();
+                        cell.innerHTML = conf[m];
+                        if (m == maxindex) {
+                            cell.style.backgroundColor = "lightblue";
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    var download = downloads();
+
+    function downloads() {
+        var link = document.createElement('a');
+        link.download = 'filename.png';
+        link.href = document.getElementById('can').toDataURL()
+        link.click();
+    }
+</script>
+
+<head>
+    <meta charset="utf-8">
+    <title>Multi-Digit Recognizer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Latest compiled and minified CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Latest compiled JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    {% load static %}
+
+    <link rel="stylesheet" type="text/css" href="{% static '/main/style.css' %}">
+</head>
+
+<body onload="init()">
+    <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+        <div class="container-fluid text-center">
+            <span class="navbar-text display-4" style="margin: auto;">
+                Multi-Digit Recognizer
+            </span>
+        </div>
+    </nav>
+    <div id="break" style="height: 70px;">
+
+    </div>
+    <div class="container-fluid">
+        <div class="row" style="margin: auto;">
+            <div class="col-sm-5" style="text-align: center; width: 400px;">
+                <canvas id="can" width="400" height="400"></canvas>
+            </div>
+            <div class="col-sm-2" style="margin: auto;">
+                <img id="canvasimg" style="display:none;">
+                <div class="row" style="margin: 10px auto;">
+                    <button class="btn btn-outline-primary" id="pred" onclick="predict()">
+                        Predict
+                    </button>
+                </div>
+                <div class="row" style="margin: 10px auto;">
+                    <button class="btn btn-outline-success" id="btn" onclick="downloads()">
+                        Export
+                    </button>
+                </div>
+                <div class="row" style="margin: 10px auto;">
+                    <button class="btn btn-outline-danger" id="clr" onclick="erase()">
+                        Clear
+                    </button>
+                </div>
+            </div>
+            <div class="col-sm-5" style="margin: auto; display: flex; justify-content: center;">
+                <img id="fig" src="#" alt="" width="400px" height="400px" style="display: none;">
+            </div>
+        </div>
+        <div class="row" style="margin: 50px auto;">
+            <div class="col-6">
+                <h2 style="text-align: right;">Prediction:</h2>
+            </div>
+            <div class="col-6">
+                <h2 id="result"></h2>
+            </div>
+        </div>
+        <div id="mytable" class="row" style="margin: 50px auto;">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Confidence</th>
+                        <th>0</th>
+                        <th>1</th>
+                        <th>2</th>
+                        <th>3</th>
+                        <th>4</th>
+                        <th>5</th>
+                        <th>6</th>
+                        <th>7</th>
+                        <th>8</th>
+                        <th>9</th>
+                    </tr>
+                </thead>
+                <tbody id="table_body">
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+
+</html>

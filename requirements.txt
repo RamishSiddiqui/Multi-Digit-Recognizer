@@ -1,0 +1,9 @@
+django==3.2.5
+opencv-python==4.5.3.56
+numpy==1.19.5
+pillow==8.4.0
+keras==2.6.0
+matplotlib==3.4.3
+scikit-image==0.18.3
+tensorflow==2.6.0
+django-debug-toolbar==3.2.2

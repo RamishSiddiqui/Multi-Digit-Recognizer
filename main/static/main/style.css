@@ -1,0 +1,15 @@
+body div {
+    margin: auto;
+}
+
+body div canvas {
+    border: 2px solid;
+}
+
+table {
+    table-layout: fixed;
+}
+
+td {
+    word-wrap: break-word;
+}
