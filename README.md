@@ -37,6 +37,6 @@ Run the following command to dockerize the project.
 
 
 ## Screenshots
-![img1](https://github.com/RamishSiddiqui/Multi-Digit-Recognizer/tree/main/screenshots/img1.jpg?raw=true)
-![img2](https://github.com/RamishSiddiqui/Multi-Digit-Recognizer/tree/main/screenshots/img2.jpg?raw=true)
+![img1](https://github.com/RamishSiddiqui/Multi-Digit-Recognizer/tree/main/screenshots/img1.jpeg?raw=true)
+![img2](https://github.com/RamishSiddiqui/Multi-Digit-Recognizer/tree/main/screenshots/img2.jpeg?raw=true)
 
